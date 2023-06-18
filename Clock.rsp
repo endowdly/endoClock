@@ -1,0 +1,8 @@
+/target:winexe
+/optimize+
+/checked+
+/unsafe-
+/out:out\clock.out
+#/doc:doc\clock.xml
+
+.\*.cs
