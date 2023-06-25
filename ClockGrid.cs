@@ -4,7 +4,7 @@ namespace Endo
     using System.Collections.Generic;
     using System.Drawing;
 
-    enum FillStyleMode
+    public enum FillStyleMode
     {
         LeftToRight,
         TopToBottom,
@@ -31,14 +31,14 @@ namespace Endo
 
     class ClockCellMatrix : IEnumerable<ClockCell>
     {
-        int cols, rows;
+        int nCols, nRows;
         int r;
 
         ClockCell[] cells;
 
         int GetIndex(int r, int c)
         {
-            return r * cols + c;
+            return r * nCols + c;
         }
 
         public ClockCell this[int index]
@@ -53,29 +53,24 @@ namespace Endo
             int idx;
             Point p;
 
-            cols = maxCols;
-            rows = maxRows;
-            r = clockDims; 
-            cells = new ClockCell[cols * rows];
+            nCols = maxCols;
+            nRows = maxRows;
+            r = clockDims;
+            cells = new ClockCell[nCols * nRows];
 
             for (x = 0; x < maxCols; x++)
                 for (y = 0; y < maxRows; y++)
-                { 
-                    idx = GetIndex(y, x); 
-                    p = new Point(x * r, y * r); 
+                {
+                    idx = GetIndex(y, x);
+                    p = new Point(x * r, y * r);
                     cells[idx] = new ClockCell(x, y, idx, p);
                 }
         }
 
-	bool isIndexGood(int idx)
-	{
-		return (0 < idx || idx < cells.Length) && cells.Length > 0;
-	}
-
-	bool isIndexBad(int idx) 
-	{
-		return !isIndexGood(idx);
-	}
+        bool isIndexBad(int idx)
+        {
+            return (0 > idx || idx > cells.Length) || cells.Length < 1;
+        }
 
         public IEnumerator<ClockCell> GetEnumerator()
         {
@@ -109,7 +104,7 @@ namespace Endo
 
             if (newIdx > cells.Length - 1)
                 return cells[0];
-            
+
             return cells[newIdx];
         }
 
@@ -119,16 +114,16 @@ namespace Endo
                 return null;
 
             int newIdx;
-            
+
             var cell = cells[idx];
             var newRow = cell.Row - 1;
 
             if (newRow < 0)
-                return GetLeft(GetIndex(rows - 1, cell.Col));
+                return GetLeft(GetIndex(nRows - 1, cell.Col));
 
             newIdx = GetIndex(newRow, cell.Col);
 
-            return cells[newIdx]; 
+            return cells[newIdx];
         }
 
         public ClockCell GetBelow(int idx)
@@ -141,12 +136,12 @@ namespace Endo
             var cell = cells[idx];
             var newRow = cell.Row + 1;
 
-            if (newRow >= rows)
+            if (newRow >= nRows)
                 return GetRight(GetIndex(0, cell.Col));
 
             newIdx = GetIndex(newRow, cell.Col);
 
-            return cells[newIdx]; 
+            return cells[newIdx];
         }
     }
 }

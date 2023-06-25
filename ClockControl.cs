@@ -10,7 +10,7 @@
         const double Tau = Math.PI * 2;    // One full turn or circle.  
         const double Sixtieth = Tau / 60;  // 6 degrees represented in rads
         const double Twelfth = Tau / 12;   // 30 degrees represented in rads
-        const double Fourth = Tau / 4;     // 90 degrees represented in rads
+        const double Pi = Math.PI;     // 90 degrees represented in rads (fourth tau)
 
         System.ComponentModel.Container components = null;
 
@@ -25,10 +25,11 @@
         public readonly string ClockName;
         public readonly TimeZoneInfo TimeZone;
 
-        public bool CanDrawHourTicks = true;
-        public bool CanDrawMinuteTicks = true;
-        public bool CanDrawFace = false;
-	public bool CanDrawName = true;
+        public bool CanDrawHourTicks;
+        public bool CanDrawMinuteTicks;
+        public bool CanDrawFace;
+        public bool CanDrawName; 
+        public bool CanDrawSecondHand;
         public float TickThickness = 1.0f;
         public Color ColorHourHand;
         public Color ColorMinuteHand;
@@ -38,7 +39,7 @@
         public Color ColorMinuteTick;
         public Color ColorText;
         public FontFamily FaceFont;
-	public int FaceFontSize;
+        public int FaceFontSize;
 
         public DateTime Time;
 
@@ -51,16 +52,17 @@
             ColorHourTick = ColorTranslator.FromHtml(data.Colors.HourTick);
             ColorMinuteTick = ColorTranslator.FromHtml(data.Colors.MinuteTick);
             ColorText = ColorTranslator.FromHtml(data.Colors.Text);
-	    CanDrawHourTicks = data.ShowHourTicks;
-	    CanDrawMinuteTicks = data.ShowMinuteTicks;
-	    CanDrawName = data.ShowLabel;
+            CanDrawHourTicks = data.ShowHourTicks;
+            CanDrawMinuteTicks = data.ShowMinuteTicks;
+            CanDrawName = data.ShowLabel;
+            CanDrawSecondHand = data.ShowSecondHand;
             FaceFont = new FontFamily(data.FaceFont);
             ClockName = data.Label;
             TimeZone = TimeZoneInfo.FindSystemTimeZoneById(data.TimeZoneId);
-	    FaceFontSize = 10;
+            FaceFontSize = 10;
 
             UpdateTime();
-	    ResetSize();
+            ResetSize();
             InitializeComponent();
         }
 
@@ -81,16 +83,18 @@
             h = Time.Hour;
             fMin = (m + s / 60.0);
             fHr = (h + fMin / 60.0);
-            aSec = Fourth - (Sixtieth * s);
-            aMin = Fourth - (Sixtieth * fMin);
-            aHr = Fourth - (Twelfth * fHr);
+            aSec = Pi - (Sixtieth * s);
+            aMin = Pi - (Sixtieth * fMin);
+            aHr = Pi - (Twelfth * fHr);
 
-	    DrawFace(x.Graphics);
+            DrawFace(x.Graphics);
 
             if (CanDrawName)
-		DrawText(x.Graphics, ClockName);
+                DrawText(x.Graphics, ClockName);
 
-            DrawLine(x.Graphics, new Pen(ColorSecondHand, TickThickness), aSec, 0.95);
+            if (CanDrawSecondHand)
+                DrawLine(x.Graphics, new Pen(ColorSecondHand, TickThickness), aSec, 0.95);
+
             DrawLine(x.Graphics, new Pen(ColorMinuteHand, TickThickness), aMin, 0.9);
             DrawLine(x.Graphics, new Pen(ColorHourHand, TickThickness), aHr, 0.6);
         }
@@ -98,6 +102,7 @@
         void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            DoubleBuffered = true;
         }
 
         void ResetSize()
@@ -119,13 +124,11 @@
         }
 
         void DrawFace(Graphics g)
-        {
-            int i;
-
+        { 
             if (CanDrawFace)
                 g.FillEllipse(new SolidBrush(ColorFace), p0.X - r, p0.Y - r, r * 2, r * 2);
 
-            for (i = 0; i <= 60; i++)
+            for (var i = 0; i <= 60; i++)
             {
                 if (i % 5 == 0 && CanDrawHourTicks)
                     DrawLine(g, new Pen(ColorHourTick, TickThickness), i * Twelfth, -0.05);
@@ -136,7 +139,7 @@
 
         void DrawText(Graphics g, string s)
         {
-	    int fontSize;
+            int fontSize;
             SizeF newSize;
             Font tFont;
 
@@ -165,9 +168,9 @@
             Time = TimeZoneInfo.ConvertTime(t, TimeZoneInfo.Local, TimeZone);
         }
 
-	public void UpdateTime()
-	{
-	    UpdateTime(DateTime.Now);
-	}
+        public void UpdateTime()
+        {
+            UpdateTime(DateTime.Now);
+        }
     }
 }

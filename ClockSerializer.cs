@@ -28,30 +28,31 @@ namespace Endo
 		public bool ShowMinuteTicks;
 		public bool ShowHourTicks;
 		public bool ShowLabel;
+        public bool ShowSecondHand;
 	}
 
 	public class ClockDataCollection
 	{
 		[XmlElement]
 		public ClockData[] ClockData;
+        public FillStyleMode FillStyle;
+        public int ClockSize;
 	}
 
 	static class ClockDataManager
 	{
-		static string[] DefaultPaths = 
+		static string[] defaultPaths = 
 		{
 			Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
 			"endoClock",
 			"endoClockConfig.xml",
 		};
 
-		public static readonly string DefaultPath = Path.Combine(DefaultPaths);
+		public static readonly string DefaultPath = Path.Combine(defaultPaths);
 
 		public static ClockDataCollection GetConfig()
-		{
-			FileInfo config;
-			
-			config = new FileInfo(DefaultPath);
+		{ 
+			var config = new FileInfo(DefaultPath);
 
 			if (!config.Exists)
 			{
@@ -99,6 +100,7 @@ namespace Endo
 			clockData.ShowHourTicks = true;
 			clockData.ShowMinuteTicks = true;
 			clockData.ShowLabel = true;
+            clockData.ShowSecondHand = false;
 
 			return clockData;			
 		}
@@ -109,8 +111,10 @@ namespace Endo
 			var utcTz = TimeZoneInfo.Utc;
 			var pstTz = TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time");
 			var estTz = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+            var collection = new ClockDataCollection();
 
-			var collection = new ClockDataCollection();
+            collection.FillStyle = FillStyleMode.TopToBottom;
+            collection.ClockSize = 113;
 			collection.ClockData = new ClockData[]
 			{
 				MakeClockData("Local", localTz.Id),
@@ -129,17 +133,49 @@ namespace Endo
 
 			serializer.Serialize(writer, data);
 			writer.Close();			
-		}
-			
-		static void Save(string path)
-		{
-			Save(path, Default());
-		}
+		} 
 
 		static void Save()
 		{
 			Save(DefaultPath, Default());
 		}
+
+        public static void Save(ClockContainerForm x)
+        {
+            var y = new ClockDataCollection();
+
+            y.ClockSize = x.ClockRadius;
+            y.FillStyle = x.FillStyle;
+            y.ClockData = new ClockData[x.Clocks.Length];
+
+            for (var i = 0; i < x.Clocks.Length; i++)
+            {
+                var c = x.Clocks[i];
+
+                y.ClockData[i] = new ClockData()
+                { 
+                    FaceFont = c.FaceFont.Name,
+                    Label = c.ClockName,
+                    ShowLabel = c.CanDrawName,
+                    ShowHourTicks = c.CanDrawHourTicks,
+                    ShowMinuteTicks = c.CanDrawMinuteTicks,
+                    ShowSecondHand = c.CanDrawSecondHand, 
+                    TimeZoneId = c.TimeZone.Id, 
+                    Colors = new ClockColor()
+                    { 
+                        HourHand = ColorTranslator.ToHtml(c.ColorHourHand),
+                        MinuteHand = ColorTranslator.ToHtml(c.ColorMinuteHand),
+                        SecondHand = ColorTranslator.ToHtml(c.ColorSecondHand),
+                        Face = ColorTranslator.ToHtml(c.ColorFace),
+                        HourTick = ColorTranslator.ToHtml(c.ColorHourTick),
+                        MinuteTick = ColorTranslator.ToHtml(c.ColorMinuteTick),
+                        Text = ColorTranslator.ToHtml(c.ColorText),
+                    },
+                };
+            }
+
+            Save(DefaultPath, y); 
+        }
 
 		static ClockDataCollection Load(string path)
 		{

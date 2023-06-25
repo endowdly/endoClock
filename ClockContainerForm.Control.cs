@@ -1,200 +1,237 @@
 ﻿namespace Endo
 {
-	using System;
-    	using System.Collections.Generic;
-    	using System.Drawing;
-    	using System.Drawing.Drawing2D;
-    	using System.Linq;
-    	using System.Windows.Forms;
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Drawing.Drawing2D;
+    using System.Linq;
+    using System.Windows.Forms;
 
-	partial class ClockContainerForm : Form
-	{
-	
-		protected override void OnKeyDown(KeyEventArgs x)
-		{
-	  		base.OnKeyDown(x);
+    partial class ClockContainerForm : Form
+    {
 
-			if (x.KeyCode == Keys.F1)
-				ShowHelp();
+        protected override void OnKeyDown(KeyEventArgs x)
+        {
+            base.OnKeyDown(x);
 
-			if (x.Control && x.KeyCode == Keys.OemPeriod)
-				IncreaseTickThickness();
-		
-			if (x.Control && x.KeyCode == Keys.Oemcomma)
-				DecreaseTickThickness();
+            if (x.KeyCode == Keys.F1)
+                ShowHelp();
 
-			if (x.Control && x.KeyCode == Keys.OemOpenBrackets)
-				DecreaseFontSize();
+            if (x.Control && x.KeyCode == Keys.OemPeriod)
+                IncreaseTickThickness();
 
-			if (x.Control && x.KeyCode == Keys.OemCloseBrackets)
-				IncreaseFontSize();
+            if (x.Control && x.KeyCode == Keys.Oemcomma)
+                DecreaseTickThickness();
 
-			if (x.Control && x.KeyCode == Keys.H)
-				ToggleShowClockName();
+            if (x.Control && x.KeyCode == Keys.OemOpenBrackets)
+                DecreaseFontSize();
 
-			if (x.Control && x.KeyCode == Keys.F)
-				ToggleShowClockFace();
+            if (x.Control && x.KeyCode == Keys.OemCloseBrackets)
+                IncreaseFontSize();
 
-			if (x.Control && x.KeyCode == Keys.Oemplus)
-				IncreaseSize();
-		
-			if (x.Control && x.KeyCode == Keys.OemMinus)
-				DecreaseSize();
+            if (x.Control && x.KeyCode == Keys.H)
+                ToggleShowClockName();
 
-			if (x.KeyCode == Keys.F11)
-				ToggleFullScreen();
+            if (x.Control && x.KeyCode == Keys.F)
+                ToggleShowClockFace();
 
-			if (x.Alt && x.KeyCode == Keys.R)
-				HotReload();
-			
-			if (x.Control && x.KeyCode == Keys.Q || x.KeyCode == Keys.X)
-				Quit();
+            if (x.Control && x.KeyCode == Keys.Oemplus)
+                IncreaseSize();
 
-			if (x.Alt && x.KeyCode == Keys.F)
-				FlipFill();
-		}
+            if (x.Control && x.KeyCode == Keys.OemMinus)
+                DecreaseSize();
 
-		void FlipFill()
-		{
-			if (fillStyle == FillStyleMode.LeftToRight)
-			{
-				fillStyle = FillStyleMode.TopToBottom;
-			}
-			else
-			{
-				fillStyle = FillStyleMode.LeftToRight;
-			}
+            if (x.KeyCode == Keys.F11)
+                ToggleFullScreen();
 
-			ResetSize();
-		}
-	
-		void Quit()
-		{
-			const string message = "Are you sure you want to close the clock overlay?";
-			const string caption = "Exit";
-	
-			var canQuit = MessageBox.Show(message, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-			
-			if (canQuit == DialogResult.Yes)
-			{
-				Application.Exit();
-			}
-		}
+            if (x.Alt && x.KeyCode == Keys.R)
+                HotReload();
 
-		void ShowHelp()
-		{
-			MessageBox.Show("Help is a work in progress : (");
-		}
+            if (x.Control && x.KeyCode == Keys.Q || x.KeyCode == Keys.X)
+                Quit();
 
-		void HotReload()
-		{	
-			
-			try
-			{
-				ClockDataCollection data = ClockDataManager.GetConfig();
-				Controls.Clear();
-			
-				var clockData = data.ClockData;
-			
-				clocks = clockData.Select(datum => new ClockControl(datum)).ToArray();
+            if (x.Alt && x.KeyCode == Keys.F)
+                FlipFill();
 
-				foreach (var clock in clocks)
-					Controls.Add(clock);
-				ResetSize();
-			}
-			catch 
-			{
-				MessageBox.Show("Error with config file!");
-				return;
-			}
-		
-			
-		}
+            if (x.Alt && x.KeyCode == Keys.S)
+                ToggleShowSecondHand();
 
-		// Psuedo fullscreen as the form should always meet screen bounds.
-		void ToggleFullScreen()
-		{
-			if (FormBorderStyle == FormBorderStyle.None)
-			{
-				FormBorderStyle = FormBorderStyle.Sizable;
-			}
-			else
-			{
-				FormBorderStyle = FormBorderStyle.None;
-			}
-		
-		}
+            if (x.Control && x.KeyCode == Keys.S)
+                Save();
+        }
 
-		void IncreaseTickThickness()
-		{
-			foreach (var clock in clocks)
-				clock.TickThickness += 0.5f;
+        void FlipFill()
+        {
+            if (FillStyle == FillStyleMode.LeftToRight)
+                FillStyle = FillStyleMode.TopToBottom;
+            else
+                FillStyle = FillStyleMode.LeftToRight;
 
-			Refresh();
-		}
+            ResetSize();
+        }
 
-		void DecreaseTickThickness()
-		{
-			foreach (var clock in clocks)
-				clock.TickThickness -= 0.5f;
+        void Quit()
+        {
+            const string message = "Are you sure you want to close the clock overlay?";
+            const string caption = "Exit";
 
-			Refresh();
-		}
+            var canQuit = MessageBox.Show(message, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-		// The size controls circumvent the ClockCellMatrix autosizing and exception avoidance.
-		// Easiest solution is just to catch and release.
-		void IncreaseSize()
-		{
-			clockRadius += 5;
-			
-			try
-			{
-				ResetSize();
-			} 
-			catch { } 
-		}
+            if (canQuit == DialogResult.Yes)
+                Application.Exit();
+        }
 
-		void DecreaseSize()
-		{
-			clockRadius -= 5;
-			
-			try
-			{
-				ResetSize();
-			}
-			catch { }
-		}
+        void Save()
+        {
+            const string message = "Are you sure you want to save the current overlay?";
+            const string caption = "Save";
 
-		void DecreaseFontSize()
-		{
-			foreach (var clock in clocks)
-				clock.FaceFontSize--;
-				
-			Refresh();
-		}
-		
-		void IncreaseFontSize()
-		{
-			foreach (var clock in clocks)
-				clock.FaceFontSize++;
-			Refresh();
-		}
+            var canSave = MessageBox.Show(message, caption, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-		void ToggleShowClockName()
-		{
-			foreach (var clock in clocks)
-				clock.CanDrawName = !clock.CanDrawName;
+            if (canSave == DialogResult.Yes)
+                ClockDataManager.Save(this);
+        }
 
-			Refresh();	
-		}
+        void ShowHelp()
+        {
+            MessageBox.Show("Help is a work in progress : (");
+        }
+
+        void HotReload()
+        {
+
+            try
+            {
+                ClockDataCollection data = ClockDataManager.GetConfig();
+                Controls.Clear();
+
+                var clockData = data.ClockData;
+
+                Clocks = clockData.Select(datum => new ClockControl(datum)).ToArray();
+
+                foreach (var clock in Clocks)
+                    Controls.Add(clock);
+                ResetSize();
+            }
+            catch
+            {
+                MessageBox.Show("Error with config file!");
+                return;
+            }
 
 
-		void ToggleShowClockFace()
-		{
-			foreach (var clock in clocks)
-				clock.CanDrawFace = !clock.CanDrawFace;
+        }
 
-			Refresh();	
-		}
-	}
+        // Psuedo fullscreen as the form should always meet screen bounds.
+        void ToggleFullScreen()
+        {
+            if (FormBorderStyle == FormBorderStyle.None)
+            {
+                FormBorderStyle = FormBorderStyle.Sizable;
+            }
+            else
+            {
+                FormBorderStyle = FormBorderStyle.None;
+            }
+
+        }
+
+        void IncreaseTickThickness()
+        {
+            try 
+            {
+                foreach (var clock in Clocks)
+                    clock.TickThickness += 0.5f;
+
+                Refresh(); 
+            }
+            catch {}
+        }
+
+        void DecreaseTickThickness()
+        {
+            try
+            {
+                foreach (var clock in Clocks)
+                    clock.TickThickness -= 0.5f;
+
+                Refresh();
+
+            }
+            catch {}
+        }
+
+        // The size controls circumvent the ClockCellMatrix autosizing and exception avoidance.
+        // Easiest solution is just to catch and release.
+        void IncreaseSize()
+        {
+            ClockRadius += 5;
+
+            try
+            {
+                ResetSize();
+            }
+            catch { }
+        }
+
+        void DecreaseSize()
+        {
+            ClockRadius -= 5;
+
+            try
+            {
+                ResetSize();
+            }
+            catch {}
+        }
+
+        void DecreaseFontSize()
+        {
+            try
+            {
+                foreach (var clock in Clocks)
+                    clock.FaceFontSize--;
+
+                Refresh();
+            }
+            catch {}
+        }
+
+        void IncreaseFontSize()
+        {
+            try
+            {
+                foreach (var clock in Clocks)
+                    clock.FaceFontSize++;
+
+                Refresh(); 
+            }
+            catch {}
+        }
+
+        void ToggleShowClockName()
+        {
+            foreach (var clock in Clocks)
+                clock.CanDrawName = !clock.CanDrawName;
+
+            Refresh();
+        }
+
+
+        void ToggleShowClockFace()
+        {
+            foreach (var clock in Clocks)
+                clock.CanDrawFace = !clock.CanDrawFace;
+
+            Refresh();
+        }
+
+        void ToggleShowSecondHand()
+        {
+            foreach (var clock in Clocks)
+                clock.CanDrawSecondHand = !clock.CanDrawSecondHand;
+
+            Refresh();
+        }
+    }
 }

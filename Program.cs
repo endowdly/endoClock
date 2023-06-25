@@ -12,18 +12,18 @@ namespace Endo
         [STAThread]
         static void Main()
         {
-		try
-		{
-			ClockDataCollection data = ClockDataManager.GetConfig();
+            try
+            {
+                ClockDataCollection data = ClockDataManager.GetConfig();
 
-			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);	    
-			Application.Run(new ClockContainerForm(data));
-		}
-		catch (Exception ex)
-		{
-			MessageBox.Show(ex.Message);
-		}
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);	    
+                Application.Run(new ClockContainerForm(data));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
     }
 }

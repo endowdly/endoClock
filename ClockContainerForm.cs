@@ -9,68 +9,67 @@
 
     partial class ClockContainerForm : Form
     {
-        const int DefaultRadius = 250;
-        const int Spacing = 24;
+        const int Spacing = 13;
 
-	readonly Color transColor = Color.Silver;
+        readonly Color transColor = Color.Silver;
 
-        int clockRadius;
-
-        ClockControl[] clocks;
         ClockCellMatrix grid;
-        Rectangle screenBounds;
+        Rectangle screenBounds; 
 
-        FillStyleMode fillStyle = FillStyleMode.LeftToRight;
         Timer timer = new Timer();
-	System.ComponentModel.Container components = null;
+        System.ComponentModel.Container components = null;
+
+        public int ClockRadius; 
+        public ClockControl[] Clocks;
+        public FillStyleMode FillStyle;
 
         public ClockContainerForm(ClockDataCollection c)
         {
             var data = c.ClockData;
 
             screenBounds = Screen.FromControl(this).Bounds;
-            clocks = data.Select(datum => new ClockControl(datum)).ToArray();
-            clockRadius = DefaultRadius;
-	    timer.Interval = 1000;
+            Clocks = data.Select(datum => new ClockControl(datum)).ToArray();
+            ClockRadius = c.ClockSize;
+            FillStyle = c.FillStyle;
+            timer.Interval = 1000;
 
-            while (clocks.Length > GetMaxClocks())
-            {
-                clockRadius--;
-            }
-		
-	    ResetSize();
+            while (Clocks.Length > GetMaxClocks())
+                ClockRadius--;
+
+            ResetSize();
             InitializeComponent();
         }
-	
-	protected override void Dispose(bool isDisposing)
-	{
-	    if (isDisposing && (components != null))
-		components.Dispose();
 
-	    base.Dispose(isDisposing);
-	}
+        protected override void Dispose(bool isDisposing)
+        {
+            if (isDisposing && (components != null))
+                components.Dispose();
 
-	protected override void OnResize(EventArgs x)
-	{
-	    base.OnResize(x);
-	    ResetSize();
-	}
+            base.Dispose(isDisposing);
+        }
+
+        protected override void OnResize(EventArgs x)
+        {
+            base.OnResize(x);
+            ResetSize();
+        }
 
         void InitializeComponent()
         {
-	    foreach (var clock in clocks)
-		Controls.Add(clock);
-	    
-	    KeyPreview = true;
-	    BackColor = transColor;
-	    TransparencyKey = transColor;
-	    ShowIcon = false;
-	    Bounds = screenBounds;
-	    TopMost = true;
-	    DoubleBuffered = true;
-	    FormBorderStyle = FormBorderStyle.None;
-	    StartPosition = FormStartPosition.Manual;
-	    Location = new Point(0, 10);
+            foreach (var clock in Clocks)
+                Controls.Add(clock);
+
+            Text = "Clock";
+            KeyPreview = true;
+            BackColor = transColor;
+            TransparencyKey = transColor;
+            ShowIcon = false;
+            Bounds = screenBounds;
+            TopMost = true;
+            DoubleBuffered = true;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.Manual;
+            Location = new Point(0, 10);
             timer.Tick += new EventHandler(timer_OnTick);
 
             timer.Start();
@@ -78,12 +77,12 @@
 
         int GetRows()
         {
-            return (int)Math.Floor((double)screenBounds.Height / (clockRadius + Spacing));
+            return (int)Math.Floor((double)screenBounds.Height / (ClockRadius + Spacing));
         }
 
         int GetCols()
         {
-            return (int)Math.Floor((double)screenBounds.Width / (clockRadius + Spacing));
+            return (int)Math.Floor((double)screenBounds.Width / (ClockRadius + Spacing));
         }
 
         int GetMaxClocks()
@@ -107,61 +106,57 @@
 
         void FillLeftToRight()
         {
-            int i;
-
-            for (i = 0; i < clocks.Length; i++)
+            for (var i = 0; i < Clocks.Length; i++)
             {
                 var cell = grid[i];
 
                 cell.IsClock = true;
-                cell.Clock = clocks[i];
+                cell.Clock = Clocks[i];
             }
         }
 
         void FillTopToBottom()
-        {
-            int i;
+        { 
+            int j = 0;
 
-            var j = 0;
-
-            for (i = 0; i < clocks.Length; i++)
+            for (var i = 0; i < Clocks.Length; i++)
             {
                 var cell = grid[j];
 
                 cell.IsClock = true;
-                cell.Clock = clocks[i];
+                cell.Clock = Clocks[i];
 
                 j = grid.GetBelow(j).Index;
             }
         }
 
-	void SetClockSize()
-	{
-		var clockCells = grid.Where(cell => cell.IsClock);
+        void SetClocksize()
+        {
+            var clockCells = grid.Where(cell => cell.IsClock);
 
-		foreach (var cell in clockCells)
-		{
-			cell.Clock.Location = cell.Location;
-			cell.Clock.Size = new Size(clockRadius, clockRadius);
-			cell.Clock.Margin = new Padding(Spacing);
-		}
-	}
+            foreach (var cell in clockCells)
+            {
+                cell.Clock.Location = cell.Location;
+                cell.Clock.Size = new Size(ClockRadius, ClockRadius);
+                cell.Clock.Margin = new Padding(Spacing);
+            }
+        }
 
-	void GetGrid()
-	{
-            grid = new ClockCellMatrix(GetCols(), GetRows(), clockRadius + Spacing);
-	}
+        void GetGrid()
+        {
+            grid = new ClockCellMatrix(GetCols(), GetRows(), ClockRadius + Spacing);
+        }
 
-	void ResetSize()
-	{
-	    GetGrid();
-	    FillGrid(fillStyle);
-	    SetClockSize();
-	}
+        void ResetSize()
+        {
+            GetGrid();
+            FillGrid(FillStyle);
+            SetClocksize();
+        }
 
         void timer_OnTick(object sender, EventArgs e)
         {
-            foreach (var clock in clocks)
+            foreach (var clock in Clocks)
                 clock.UpdateTime(DateTime.Now);
 
             Refresh();
