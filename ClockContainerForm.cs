@@ -15,7 +15,6 @@
 
         ClockCellMatrix grid;
         Rectangle screenBounds; 
-
         Timer timer = new Timer();
         System.ComponentModel.Container components = null;
 
@@ -28,10 +27,10 @@
             var data = c.ClockData;
 
             screenBounds = Screen.FromControl(this).Bounds;
+            timer.Interval = 1000;
             Clocks = data.Select(datum => new ClockControl(datum)).ToArray();
             ClockRadius = c.ClockSize;
             FillStyle = c.FillStyle;
-            timer.Interval = 1000;
 
             while (Clocks.Length > GetMaxClocks())
                 ClockRadius--;

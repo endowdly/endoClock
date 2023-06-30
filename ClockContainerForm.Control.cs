@@ -9,7 +9,6 @@
 
     partial class ClockContainerForm : Form
     {
-
         protected override void OnKeyDown(KeyEventArgs x)
         {
             base.OnKeyDown(x);
@@ -99,7 +98,6 @@
 
         void HotReload()
         {
-
             try
             {
                 ClockDataCollection data = ClockDataManager.GetConfig();
@@ -118,8 +116,6 @@
                 MessageBox.Show("Error with config file!");
                 return;
             }
-
-
         }
 
         // Psuedo fullscreen as the form should always meet screen bounds.
@@ -133,19 +129,18 @@
             {
                 FormBorderStyle = FormBorderStyle.None;
             }
-
         }
 
         void IncreaseTickThickness()
         {
-            try 
+            try
             {
                 foreach (var clock in Clocks)
                     clock.TickThickness += 0.5f;
 
-                Refresh(); 
+                Refresh();
             }
-            catch {}
+            catch { }
         }
 
         void DecreaseTickThickness()
@@ -158,7 +153,7 @@
                 Refresh();
 
             }
-            catch {}
+            catch { }
         }
 
         // The size controls circumvent the ClockCellMatrix autosizing and exception avoidance.
@@ -182,7 +177,7 @@
             {
                 ResetSize();
             }
-            catch {}
+            catch { }
         }
 
         void DecreaseFontSize()
@@ -194,7 +189,7 @@
 
                 Refresh();
             }
-            catch {}
+            catch { }
         }
 
         void IncreaseFontSize()
@@ -204,9 +199,9 @@
                 foreach (var clock in Clocks)
                     clock.FaceFontSize++;
 
-                Refresh(); 
+                Refresh();
             }
-            catch {}
+            catch { }
         }
 
         void ToggleShowClockName()

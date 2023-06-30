@@ -13,6 +13,7 @@ namespace Endo
 		public string HourHand;
 		public string MinuteHand;
 		public string SecondHand;
+        public string Indicator;
 		public string Face;
 		public string HourTick;
 		public string MinuteTick;
@@ -86,6 +87,7 @@ namespace Endo
 				HourHand = ColorTranslator.ToHtml(Color.Magenta),
 				MinuteHand = ColorTranslator.ToHtml(Color.Magenta),
 				SecondHand = ColorTranslator.ToHtml(Color.Cyan),
+                Indicator = ColorTranslator.ToHtml(Color.Magenta),
 				Face = ColorTranslator.ToHtml(Color.Black),
 				HourTick = ColorTranslator.ToHtml(Color.Cyan),
 				MinuteTick = ColorTranslator.ToHtml(Color.Magenta),

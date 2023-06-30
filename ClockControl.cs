@@ -10,7 +10,9 @@
         const double Tau = Math.PI * 2;    // One full turn or circle.  
         const double Sixtieth = Tau / 60;  // 6 degrees represented in rads
         const double Twelfth = Tau / 12;   // 30 degrees represented in rads
-        const double Pi = Math.PI;     // 90 degrees represented in rads (fourth tau)
+        const double Fourth = Tau / 4;     // 90 degrees represented in rads (fourth tau)
+        const string Ahead = "+1";
+        const string Behind = "-1";
 
         System.ComponentModel.Container components = null;
 
@@ -18,6 +20,8 @@
         int r;
 
         int s, m, h;
+        bool isAfternoon, isAhead, isBehind;
+        string dayLeadLag;
 
         double fMin, fHr;
         double aSec, aMin, aHr;
@@ -35,6 +39,7 @@
         public Color ColorMinuteHand;
         public Color ColorSecondHand;
         public Color ColorFace;
+        public Color ColorIndicator;
         public Color ColorHourTick;
         public Color ColorMinuteTick;
         public Color ColorText;
@@ -48,6 +53,7 @@
             ColorHourHand = ColorTranslator.FromHtml(data.Colors.HourHand);
             ColorMinuteHand = ColorTranslator.FromHtml(data.Colors.MinuteHand);
             ColorSecondHand = ColorTranslator.FromHtml(data.Colors.SecondHand);
+            ColorIndicator = ColorTranslator.FromHtml(data.Colors.Indicator); 
             ColorFace = ColorTranslator.FromHtml(data.Colors.Face);
             ColorHourTick = ColorTranslator.FromHtml(data.Colors.HourTick);
             ColorMinuteTick = ColorTranslator.FromHtml(data.Colors.MinuteTick);
@@ -83,14 +89,24 @@
             h = Time.Hour;
             fMin = (m + s / 60.0);
             fHr = (h + fMin / 60.0);
-            aSec = Pi - (Sixtieth * s);
-            aMin = Pi - (Sixtieth * fMin);
-            aHr = Pi - (Twelfth * fHr);
+            aSec = Fourth - (Sixtieth * s);
+            aMin = Fourth - (Sixtieth * fMin);
+            aHr = Fourth - (Twelfth * fHr);
 
             DrawFace(x.Graphics);
 
+            if (isAhead)
+                dayLeadLag = Ahead; 
+            else if (isBehind)
+                dayLeadLag = Behind;
+            else 
+                dayLeadLag = string.Empty; 
+
             if (CanDrawName)
-                DrawText(x.Graphics, ClockName);
+                DrawText(x.Graphics, ClockName, p0.X, p0.Y + r / 6);
+
+            DrawText(x.Graphics, dayLeadLag, p0.X, p0.Y + r / 3);
+            
 
             if (CanDrawSecondHand)
                 DrawLine(x.Graphics, new Pen(ColorSecondHand, TickThickness), aSec, 0.95);
@@ -128,6 +144,9 @@
             if (CanDrawFace)
                 g.FillEllipse(new SolidBrush(ColorFace), p0.X - r, p0.Y - r, r * 2, r * 2);
 
+            if (isAfternoon)
+                g.FillEllipse(new SolidBrush(ColorIndicator), p0.X - r / 10, p0.Y - r / 2, r / 10, r / 10);
+
             for (var i = 0; i <= 60; i++)
             {
                 if (i % 5 == 0 && CanDrawHourTicks)
@@ -137,7 +156,7 @@
             }
         }
 
-        void DrawText(Graphics g, string s)
+        void DrawText(Graphics g, string s, float x, float y)
         {
             int fontSize;
             SizeF newSize;
@@ -146,8 +165,8 @@
             var drawFont = new Font(FaceFont, FaceFontSize);
             var drawBrush = new SolidBrush(ColorText);
             var drawFormat = new StringFormat();
-            var x = p0.X;
-            var y = p0.Y + r / 6;
+            // var x = p0.X;
+            // var y = p0.Y + r / 6;
 
             drawFormat.Alignment = StringAlignment.Center;
 
@@ -165,7 +184,10 @@
 
         public void UpdateTime(DateTime t)
         {
-            Time = TimeZoneInfo.ConvertTime(t, TimeZoneInfo.Local, TimeZone);
+            Time = TimeZoneInfo.ConvertTime(t, TimeZoneInfo.Local, TimeZone); 
+            isAfternoon = Time.TimeOfDay > new TimeSpan(12, 0, 0);
+            isAhead = Time.Day > t.Day;
+            isBehind = Time.Day < t.Day; 
         }
 
         public void UpdateTime()
