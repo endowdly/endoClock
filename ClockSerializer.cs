@@ -168,6 +168,7 @@ namespace Endo
                         HourHand = ColorTranslator.ToHtml(c.ColorHourHand),
                         MinuteHand = ColorTranslator.ToHtml(c.ColorMinuteHand),
                         SecondHand = ColorTranslator.ToHtml(c.ColorSecondHand),
+                        Indicator = ColorTranslator.ToHtml(c.ColorIndicator),
                         Face = ColorTranslator.ToHtml(c.ColorFace),
                         HourTick = ColorTranslator.ToHtml(c.ColorHourTick),
                         MinuteTick = ColorTranslator.ToHtml(c.ColorMinuteTick),

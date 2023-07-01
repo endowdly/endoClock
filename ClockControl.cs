@@ -5,26 +5,39 @@
     using System.Drawing.Drawing2D;
     using System.Windows.Forms;
 
+    [Flags]
+    enum ClockState
+    {
+        Normal = 0,
+        Afternoon = 1,
+        Ahead = 2,
+        Behind = 4, 
+    }
+
     class ClockControl : UserControl
     {
         const double Tau = Math.PI * 2;    // One full turn or circle.  
         const double Sixtieth = Tau / 60;  // 6 degrees represented in rads
         const double Twelfth = Tau / 12;   // 30 degrees represented in rads
-        const double Fourth = Tau / 4;     // 90 degrees represented in rads (fourth tau)
+        const double Fourth = Tau / 4;     // 90 degrees represented in rads (fourth tau or half pi)
         const string Ahead = "+1";
         const string Behind = "-1";
 
+        static readonly TimeSpace Noon = new TimeSpace(12, 0, 0);
+
         System.ComponentModel.Container components = null;
 
-        Point p0;
-        int r;
+        string dayLeadLag = string.Empty; 
+        ClockState state;
+        Point p0;  // This is the origin point or the center of the clock.
+        int r;     // The radius of the clock.
 
         int s, m, h;
-        bool isAfternoon, isAhead, isBehind;
-        string dayLeadLag;
-
         double fMin, fHr;
         double aSec, aMin, aHr;
+
+        int fontFaceSize = 10; 
+        float tickThickness = 1.0f;
 
         public readonly string ClockName;
         public readonly TimeZoneInfo TimeZone;
@@ -34,7 +47,6 @@
         public bool CanDrawFace;
         public bool CanDrawName; 
         public bool CanDrawSecondHand;
-        public float TickThickness = 1.0f;
         public Color ColorHourHand;
         public Color ColorMinuteHand;
         public Color ColorSecondHand;
@@ -44,9 +56,28 @@
         public Color ColorMinuteTick;
         public Color ColorText;
         public FontFamily FaceFont;
-        public int FaceFontSize;
 
         public DateTime Time;
+
+        public int FaceFontSize
+        {
+            get { return faceFontSize; }
+            set 
+            {
+                if (value > 0)
+                    fontFaceSize = FaceFontSize;
+            }
+        }
+
+        public float TickThickness
+        {
+            get { return tickThickness; }
+            set 
+            {
+                if (value > 0)
+                    fontFaceSize = FaceFontSize;
+            }
+        }
 
         public ClockControl(ClockData data)
         {
@@ -65,7 +96,6 @@
             FaceFont = new FontFamily(data.FaceFont);
             ClockName = data.Label;
             TimeZone = TimeZoneInfo.FindSystemTimeZoneById(data.TimeZoneId);
-            FaceFontSize = 10;
 
             UpdateTime();
             ResetSize();
@@ -82,31 +112,34 @@
         {
             base.OnPaint(x);
 
+            // These options let the clock run smoothly and look better.
             x.Graphics.SmoothingMode = SmoothingMode.HighSpeed;
             x.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+
             s = Time.Second;
             m = Time.Minute;
             h = Time.Hour;
-            fMin = (m + s / 60.0);
-            fHr = (h + fMin / 60.0);
+            fMin = (m + s / 60.0);    // Fraction minute-- minute hand moves in between ticks
+            fHr = (h + fMin / 60.0);  // Fractional hour-- hour hand moves in between ticks
+
+            // The angles of the hands in radians. Pi is towards the 0,1 direction.
+            // Since noon is at the 0,0 direction, we have to rotate backwards by a fourth.
             aSec = Fourth - (Sixtieth * s);
             aMin = Fourth - (Sixtieth * fMin);
             aHr = Fourth - (Twelfth * fHr);
 
             DrawFace(x.Graphics);
 
-            if (isAhead)
-                dayLeadLag = Ahead; 
-            else if (isBehind)
-                dayLeadLag = Behind;
-            else 
-                dayLeadLag = string.Empty; 
+            if (state.HasFlag(ClockState.Ahead))
+                dayLeadLag = Ahead;
+
+            if (state.HasFlag(ClockState.Behind))
+                dayLeadLag = Behind; 
 
             if (CanDrawName)
                 DrawText(x.Graphics, ClockName, p0.X, p0.Y + r / 6);
 
-            DrawText(x.Graphics, dayLeadLag, p0.X, p0.Y + r / 3);
-            
+            DrawText(x.Graphics, dayLeadLag, p0.X, p0.Y + r / 3); 
 
             if (CanDrawSecondHand)
                 DrawLine(x.Graphics, new Pen(ColorSecondHand, TickThickness), aSec, 0.95);
@@ -144,8 +177,8 @@
             if (CanDrawFace)
                 g.FillEllipse(new SolidBrush(ColorFace), p0.X - r, p0.Y - r, r * 2, r * 2);
 
-            if (isAfternoon)
-                g.FillEllipse(new SolidBrush(ColorIndicator), p0.X - r / 10, p0.Y - r / 2, r / 10, r / 10);
+            if (state.HasFlag(ClockState.Afternoon))
+                g.DrawEllipse(new Pen(ColorIndicator, TickThickness), p0.X - r / 12,  p0.Y - r / 2, r / 6, r / 6);
 
             for (var i = 0; i <= 60; i++)
             {
@@ -165,12 +198,10 @@
             var drawFont = new Font(FaceFont, FaceFontSize);
             var drawBrush = new SolidBrush(ColorText);
             var drawFormat = new StringFormat();
-            // var x = p0.X;
-            // var y = p0.Y + r / 6;
 
             drawFormat.Alignment = StringAlignment.Center;
 
-            for (fontSize = 04; fontSize <= FaceFontSize; fontSize++)
+            for (fontSize = 01; fontSize <= FaceFontSize; fontSize++)
             {
                 tFont = new Font(drawFont.Name, fontSize, drawFont.Style);
                 newSize = g.MeasureString(s, tFont);
@@ -184,10 +215,16 @@
 
         public void UpdateTime(DateTime t)
         {
-            Time = TimeZoneInfo.ConvertTime(t, TimeZoneInfo.Local, TimeZone); 
-            isAfternoon = Time.TimeOfDay > new TimeSpan(12, 0, 0);
-            isAhead = Time.Day > t.Day;
-            isBehind = Time.Day < t.Day; 
+            Time = TimeZoneInfo.ConvertTime(t, TimeZoneInfo.Local, TimeZone);
+
+            if (Time.TimeOfDay > Noon)
+                state |= ClockState.Afternoon;
+
+            if (Time.Date > t.Date)
+                state |= ClockState.Ahead;
+            
+            if (Time.Date < t.Date)
+                state |= ClockState.Behind;
         }
 
         public void UpdateTime()
